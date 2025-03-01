@@ -1,0 +1,17 @@
+from rest_framework import serializers
+from .models import Tenant, MaintenanceRequest, Payment
+
+class TenantSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Tenant
+        fields = ['id', 'name', 'contact_info']
+
+class MaintenanceRequestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MaintenanceRequest
+        fields = ['id', 'tenant', 'description', 'urgency_level', 'status', 'created_at']
+
+class PaymentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Payment
+        fields = ['id', 'tenant', 'amount', 'payment_date', 'method']

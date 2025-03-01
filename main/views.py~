@@ -1,0 +1,42 @@
+from .models import Tenant
+from .serializers import TenantSerializer
+from .models import MaintenanceRequest
+from .serializers import MaintenanceRequestSerializer
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from .models import Payment
+from .serializers import PaymentSerializer
+
+class SubmitPaymentView(APIView):
+    def post(self, request, tenantId):
+        data = request.data
+        tenant = Tenant.objects.get(id=tenantId)
+        payment = Payment.objects.create(
+            tenant=tenant,
+            amount=data['amount'],
+            method=data['method']
+        )
+        serializer = PaymentSerializer(payment)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+class SubmitMaintenanceRequestView(APIView):
+    def post(self, request, tenantId):
+        data = request.data
+        tenant = Tenant.objects.get(id=tenantId)
+        maintenance_request = MaintenanceRequest.objects.create(
+            tenant=tenant,
+            description=data['description'],
+            urgency_level=data['urgency_level']
+        )
+        serializer = MaintenanceRequestSerializer(maintenance_request)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+class TenantProfileView(APIView):
+    def get(self, request, tenantId):
+        try:
+            tenant = Tenant.objects.get(id=tenantId)
+            serializer = TenantSerializer(tenant)
+            return Response(serializer.data)
+        except Tenant.DoesNotExist:
+            return Response({"error": "Tenant not found"}, status=status.HTTP_404_NOT_FOUND)
