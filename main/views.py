@@ -1,9 +1,29 @@
-from rest_framework import status
-from rest_framework.views import APIView
-from rest_framework.response import Response
 from .models import Tenant, MaintenanceRequest, Payment, Complaint, Notification
 from .serializers import TenantSerializer, MaintenanceRequestSerializer, PaymentSerializer, ComplaintSerializer, NotificationSerializer
 from rest_framework.permissions import IsAuthenticated
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import RefreshToken
+from .serializers import UserRegistrationSerializer
+
+class RegisterView(APIView):
+    def post(self, request):
+        serializer = UserRegistrationSerializer(data=request.data)
+        if serializer.is_valid():
+            # Create the user
+            user = serializer.save()
+
+            # Generate JWT tokens
+            refresh = RefreshToken.for_user(user)
+            access_token = refresh.access_token
+
+            return Response({
+                'access': str(access_token),
+                'refresh': str(refresh)
+            }, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class TenantProfileView(APIView):
     permission_classes = [IsAuthenticated]
@@ -82,12 +102,19 @@ class NotificationsView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, tenantId):
-        notifications = Notification.objects.filter(tenant_id=tenantId)
-        serializer = NotificationSerializer(notifications, many=True)
-        return Response(serializer.data)
+        try:
+            notifications = Notification.objects.filter(tenant_id=tenantId)
+            serializer = NotificationSerializer(notifications, many=True)
+            return Response(serializer.data)
+        except Notification.DoesNotExist:
+            return Response({"error": "Notifications not found"}, status=status.HTTP_404_NOT_FOUND)
 
     def put(self, request, tenantId):
-        notification = Notification.objects.get(id=request.data.get('id'), tenant_id=tenantId)
-        notification.is_read = True
-        notification.save()
-        return Response({"message": "Notification marked as read"})
+        try:
+            notification = Notification.objects.get(id=request.data.get('id'), tenant_id=tenantId)
+            notification.is_read = True
+            notification.save()
+            return Response({"message": "Notification marked as read"})
+        except Notification.DoesNotExist:
+            return Response({"error": "Notification not found or you don't have permission to update this notification."},
+                            status=status.HTTP_404_NOT_FOUND)
