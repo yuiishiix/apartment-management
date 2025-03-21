@@ -81,3 +81,22 @@ class AssessLateFeeView(APIView):
             return Response({"error": "An error occurred."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+class DeletePaymentMethodView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, payment_id):
+        try:
+            # Retrieve the payment method based on the payment_id
+            payment = Payment.objects.get(id=payment_id)
+
+            # Delete the payment method
+            payment.delete()
+
+            # Return success message
+            return Response({"message": "Payment method deleted successfully."}, status=status.HTTP_200_OK)
+
+        except Payment.DoesNotExist:
+            return Response({"error": "Payment method not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
