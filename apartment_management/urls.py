@@ -9,5 +9,6 @@ urlpatterns = [
     path('api/payments/', include('payments.urls')),  # Payments
     path('api/complains/', include('complains.urls')),  # Complaints
     path('api/notifications/', include('notifications.urls')),  # Notifications
+    path('api/facility/', include('facility.urls')),  # Facility management
 ]
 
