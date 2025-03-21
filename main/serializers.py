@@ -1,6 +1,6 @@
 from rest_framework import serializers
-from .models import CustomUser, Tenant, MaintenanceRequest, Payment, Complaint, Notification
-from decimal import Decimal
+from .models import CustomUser
+
 
 
 # ✅ User Registration Serializer
@@ -16,70 +16,3 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         user = CustomUser.objects.create_user(password=password, **validated_data)
         return user
 
-
-# ✅ Tenant Serializer
-class TenantSerializer(serializers.ModelSerializer):
-    user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all())
-
-    class Meta:
-        model = Tenant
-        fields = ['id', 'user', 'contact_info', 'address', 'lease_start_date', 'lease_end_date']
-
-    def create(self, validated_data):
-        return Tenant.objects.create(**validated_data)
-
-    def update(self, instance, validated_data):
-        instance.contact_info = validated_data.get('contact_info', instance.contact_info)
-        instance.address = validated_data.get('address', instance.address)
-        instance.lease_start_date = validated_data.get('lease_start_date', instance.lease_start_date)
-        instance.lease_end_date = validated_data.get('lease_end_date', instance.lease_end_date)
-        instance.save()
-        return instance
-
-
-# ✅ Maintenance Request Serializer
-class MaintenanceRequestSerializer(serializers.ModelSerializer):
-    urgency_level = serializers.ChoiceField(choices=['low', 'medium', 'high'], default='medium')
-
-    class Meta:
-        model = MaintenanceRequest
-        fields = ['id', 'tenant', 'description', 'urgency_level', 'status', 'created_at']
-
-    def create(self, validated_data):
-        return MaintenanceRequest.objects.create(**validated_data)
-
-
-# ✅ Payment Serializer
-class PaymentSerializer(serializers.ModelSerializer):
-    amount = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=Decimal('0.01'))  # Fix applied ✅
-
-    class Meta:
-        model = Payment
-        fields = ['id', 'tenant', 'amount', 'payment_date', 'method']
-
-    def create(self, validated_data):
-        return Payment.objects.create(**validated_data)
-
-
-# ✅ Complaint Serializer
-class ComplaintSerializer(serializers.ModelSerializer):
-    priority_level = serializers.ChoiceField(choices=['low', 'medium', 'high'], default='medium')
-
-    class Meta:
-        model = Complaint
-        fields = ['id', 'tenant', 'description', 'priority_level', 'status', 'created_at']
-
-    def create(self, validated_data):
-        return Complaint.objects.create(**validated_data)
-
-
-# ✅ Notification Serializer
-class NotificationSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Notification
-        fields = ['id', 'tenant', 'message', 'created_at', 'is_read']
-
-    def update(self, instance, validated_data):
-        instance.is_read = validated_data.get('is_read', instance.is_read)
-        instance.save()
-        return instance
