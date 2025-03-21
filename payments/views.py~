@@ -59,25 +59,44 @@ logger = logging.getLogger(__name__)
 
 
 class AssessLateFeeView(APIView):
-    def post(self, request, apartment_number):
-        print("Received data:", request.data)
+    def post(self, request):
+        data = request.data
+        print(f"Received data: {data}")  # Debugging the incoming data
+
+        apartment_number = data.get("apartment_number")
+        overdue_days = data.get("overdue_days")
+
+        if not apartment_number or not overdue_days:
+            print("Missing required fields: apartment_number or overdue_days")
+            return Response({"error": "Apartment number and overdue days are required."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
         try:
-            overdue_days = request.data.get("overdue_days")
-            print(f"Overdue days: {overdue_days}")
+            tenant = Tenant.objects.get(user__apartment_number=apartment_number)
+            print(f"Found tenant: {tenant}")
 
-            # Your logic here for assessing late fees
-            if not overdue_days:
-                return Response({"error": "Overdue days is required"}, status=status.HTTP_400_BAD_REQUEST)
+            payment = Payment.objects.get(tenant=tenant)
+            print(f"Found payment for tenant {tenant.id}: {payment}")
 
-            # Perform the logic (e.g., calculate late fee)
-            # For example, assume you calculate the late fee and return it:
-            late_fee = overdue_days * 10  # Example calculation
-            print(f"Late fee: {late_fee}")
+            serializer = LateFeeAssessmentSerializer(data={
+                'tenant_id': tenant.id,
+                'overdue_days': overdue_days
+            })
 
-            return Response({"late_fee": late_fee}, status=status.HTTP_200_OK)
+            if serializer.is_valid():
+                result = serializer.create(serializer.validated_data)
+                return Response(result, status=status.HTTP_200_OK)
+            else:
+                print(f"Serializer errors: {serializer.errors}")
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+        except Tenant.DoesNotExist:
+            print(f"Tenant not found: {apartment_number}")
+            return Response({"error": "Tenant not found."}, status=status.HTTP_404_NOT_FOUND)
+        except Payment.DoesNotExist:
+            print(f"Payment not found for tenant: {apartment_number}")
+            return Response({"error": "Payment record not found."}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            print("Error:", e)
-            return Response({"error": "An error occurred."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+            print(f"Unexpected error: {str(e)}")
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 

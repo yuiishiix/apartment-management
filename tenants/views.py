@@ -43,14 +43,13 @@ class TenantProfileView(APIView):
         except Exception as e:
             print(f"Unexpected error: {str(e)}")
             return Response({"error": "Something went wrong"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-class LandlordTenantListView(APIView):
+class AllTenantsListView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, landlordId):
+    def get(self, request):
         try:
-            landlord = CustomUser.objects.get(id=landlordId)
-            tenants = Tenant.objects.filter(landlord=landlord)
+            tenants = Tenant.objects.all()  # Fetch all tenants
             serializer = TenantSerializer(tenants, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
-        except CustomUser.DoesNotExist:
-            return Response({"error": "Landlord not found"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"error": "Something went wrong"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

@@ -10,3 +10,4 @@ urlpatterns = [
     path('api/complains/', include('complains.urls')),  # Complaints
     path('api/notifications/', include('notifications.urls')),  # Notifications
 ]
+
