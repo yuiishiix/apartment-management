@@ -1,22 +1,33 @@
 from rest_framework import serializers
-from tenants.models import Tenant  # Updated import
+from tenants.models import Tenant
 from main.models import CustomUser
 
-# ✅ Tenant Serializer
 class TenantSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all())
+    address = serializers.SerializerMethodField()
+    first_name = serializers.SerializerMethodField()
+    last_name = serializers.SerializerMethodField()
+    email = serializers.SerializerMethodField()
+    mobile_number = serializers.SerializerMethodField()
 
     class Meta:
         model = Tenant
-        fields = ['id', 'user', 'contact_info', 'address', 'lease_start_date', 'lease_end_date']
+        fields = [
+            'id', 'user', 'first_name', 'last_name', 'email', 'mobile_number',
+            'contact_info', 'address', 'lease_start_date', 'lease_end_date'
+        ]
 
-    def create(self, validated_data):
-        return Tenant.objects.create(**validated_data)
+    def get_address(self, obj):
+        return obj.user.apartment_number  # Fetch apartment number as address
 
-    def update(self, instance, validated_data):
-        instance.contact_info = validated_data.get('contact_info', instance.contact_info)
-        instance.address = validated_data.get('address', instance.address)
-        instance.lease_start_date = validated_data.get('lease_start_date', instance.lease_start_date)
-        instance.lease_end_date = validated_data.get('lease_end_date', instance.lease_end_date)
-        instance.save()
-        return instance
+    def get_first_name(self, obj):
+        return obj.user.first_name
+
+    def get_last_name(self, obj):
+        return obj.user.last_name
+
+    def get_email(self, obj):
+        return obj.user.email
+
+    def get_mobile_number(self, obj):
+        return obj.user.mobile_number  # Assuming `mobile_number` is a field in CustomUser
