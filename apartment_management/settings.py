@@ -32,7 +32,8 @@ INSTALLED_APPS = [
     'payments',
     'complains',
     'notifications',
-    'facility'
+    'facility',
+    'polls'
 ]
 
 

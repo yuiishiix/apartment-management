@@ -54,3 +54,13 @@ class AllNotificationsView(APIView):
         notifications = Notification.objects.all()
         serializer = NotificationSerializer(notifications, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+class AnnouncementListCreateView(APIView):
+    """
+    List all announcements.
+    """
+
+    def get(self, request):
+        announcements = Announcement.objects.all()  # Fetch all announcements, active or not
+        serializer = AnnouncementSerializer(announcements, many=True)
+        return Response(serializer.data)
